@@ -19,7 +19,7 @@ const Signup = () => {
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push('/login'); // Navigate to the login screen after signup
+      router.push('./login'); // Navigate to the login screen after signup
     } catch (err: any) {
       setError(err.message); // Set error message in case of failure
     }
@@ -48,7 +48,7 @@ const Signup = () => {
 
       <Button title="Sign Up" onPress={handleSignup} />
 
-      <Text style={styles.switchText} onPress={() => router.push('/login')}>
+      <Text style={styles.switchText} onPress={() => router.push('./login')}>
         Already have an account? Login here.
       </Text>
     </View>

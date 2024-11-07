@@ -14,7 +14,7 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/home'); // Navigate to home screen (file-based routing)
+      router.push('./home'); // Navigate to home screen (file-based routing)
     } catch (err: any) {
       setError(err.message);
     }
@@ -37,7 +37,7 @@ const Login = () => {
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button title="Login" onPress={handleLogin} />
-      <Text onPress={() => router.push('/signup')} style={styles.switchText}>
+      <Text onPress={() => router.push('./signup')} style={styles.switchText}>
         Don't have an account? Sign up here.
       </Text>
     </View>
