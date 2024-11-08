@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router'; // Use Expo Router's Stack
+import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 
 const RootLayout = () => {
@@ -37,7 +38,12 @@ const RootLayout = () => {
   }, [user, initializing, segments]);
 
   if (initializing) {
-    return <div>Loading...</div>;
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>Loading...</Text>
+      </View>
+    );
   }
 
   return (
@@ -46,5 +52,13 @@ const RootLayout = () => {
     </Stack>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 export default RootLayout;
