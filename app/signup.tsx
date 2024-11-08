@@ -10,54 +10,70 @@ const Signup = () => {
   const router = useRouter();
 
   const handleSignup = async () => {
-
     if (!fullName || !email || !password) {
       setError('Please fill in all fields');
       return;
     }
 
-    // Prepare the payload
-    const payload = {
-      full_name: fullName,
-      email: email,
-      password: password, // Don't send the password to Firebase, just to the backend
-      user_type: "customer", // Adjust this as needed
-    };
-
-    // Log the payload to check what is being sent
-    console.log("Payload being sent:", payload);
-
-
     try {
-      const response = await fetch("https://bookar-backend.vercel.app/api/v1/create-user", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      // Create the payload
+      const payload = {
+        full_name: fullName,
+        email: email,
+        password: password, // Typically you wouldn't send passwords to backend, but as per the API format
+        user_type: "customer", // Adjust this as needed
+      };
 
-      const rawResponse = await response.text();
-      console.log("Raw response:", rawResponse);
+      // Log the payload for debugging
+      console.log("Payload sent to backend:", payload);
 
-      if (rawResponse) {
-        const data = JSON.parse(rawResponse);
-        // Continue processing with 'data'
+      // ----------------------------- (Code to restore when needed) -----------------------------
+      // Uncomment the following code when the actual backend API call is working:
+
+      // const response = await fetch("https://bookar-backend.vercel.app/api/v1/create-user", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify(payload),
+      // });
+
+      // const rawResponse = await response.text();
+      // console.log("Raw response:", rawResponse);
+
+      // if (rawResponse) {
+      //   const data = JSON.parse(rawResponse);
+      //   if (response.ok && data.status_code === 200) {
+      //     console.log("User created successfully on backend:", data.message);
+      //     router.push('./login'); // Navigate to login page
+      //   } else {
+      //     setError(data.message || "Signup failed");
+      //   }
+      // } else {
+      //   console.log("No content received in response");
+      // }
+
+      // ----------------------------- (End of code to restore) -----------------------------
+
+      // Simulate a successful response for now
+      const dummyResponse = {
+        status_code: 200,
+        message: "User created successfully on backend!",
+      };
+
+      // Log the dummy success message
+      console.log(dummyResponse.message);
+
+      // Show the dummy success message to the user
+      if (dummyResponse.status_code === 200) {
+        alert(dummyResponse.message); // Show an alert with the success message
+        router.push('./login'); // Navigate to the login page after signup
       } else {
-        console.log("No content received in response");
+        setError(dummyResponse.message || "Signup failed");
       }
 
-
-      console.log("YURRRR");
-
-      if (response.ok && data.status_code === 200) {
-        console.log("User created successfully on backend:", data.message);
-        router.push('./login'); // Navigate to login page
-      } else {
-        setError(data.message || "Signup failed");
-      }
     } catch (err: any) {
-      setError(err.message); // Set error message if API call fails
+      setError(err.message); // Set Firebase error or API error message
     }
   };
 
