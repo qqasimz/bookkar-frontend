@@ -1,8 +1,7 @@
 // app/login.tsx
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
-import { auth } from '@/firebase'; // Import the auth object
-import { signInWithEmailAndPassword } from 'firebase/auth'; // Firebase Auth method
+import auth from '@react-native-firebase/auth'; // Firebase Auth module
 import { useRouter } from 'expo-router'; // Import useRouter from Expo Router
 
 const Login = () => {
@@ -14,7 +13,7 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       // Firebase login
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await auth().signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
       // Commented-out the real API call for now

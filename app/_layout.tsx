@@ -2,28 +2,26 @@ import React, { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router'; // Use Expo Router's Stack
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 const RootLayout = () => {
   const [initializing, setInitializing] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>();
   const router = useRouter();
   const segments = useSegments();
 
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('Auth state changed:', user);
-      if (user) {
-        setUser(user);
-      } else {
-        setUser(null);
-      }
-      setInitializing(false);
-    });
+  const onAuthStateChanged = (user: FirebaseAuthTypes.User | null) => {
+    console.log('onAuthStateChanged:', user);
+    setUser(user);
+    if (initializing) setInitializing(false);
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
-  }, []);
+  }
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    return subscriber; // unsubscribe on unmount
+  }, []); // Add the useEffect hook here
+
 
   useEffect(() => { 
     if (initializing) return;
@@ -49,6 +47,7 @@ const RootLayout = () => {
   return (
     <Stack>
       <Stack.Screen name="signup" options={{ title: 'Signup' }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
     </Stack>
   );
 };
