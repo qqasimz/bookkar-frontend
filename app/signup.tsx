@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Picker } from '@react-native-picker/picker';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [userType, setUserType] = useState('customer'); // Default to 'customer'
   const [error, setError] = useState('');
   const router = useRouter();
 
@@ -20,8 +22,8 @@ const Signup = () => {
       const payload = {
         full_name: fullName,
         email: email,
-        password: password, // Typically you wouldn't send passwords to backend, but as per the API format
-        user_type: "customer", // Adjust this as needed
+        password: password, 
+        user_type: userType, 
       };
 
       // Log the payload for debugging
@@ -104,6 +106,17 @@ const Signup = () => {
         onChangeText={setPassword}
       />
 
+      <View style={styles.pickerContainer}>
+        <Picker
+          selectedValue={userType}
+          onValueChange={(itemValue) => setUserType(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Customer" value="customer" />
+          <Picker.Item label="Owner" value="owner" />
+        </Picker>
+      </View>
+
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Button title="Sign Up" onPress={handleSignup} />
@@ -135,6 +148,22 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingLeft: 8,
   },
+  pickerContainer: {
+    width: '100%',
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    marginBottom: 10,
+    justifyContent: 'center', // Centers the dropdown text vertically
+  },
+  picker: {
+    width: '100%',
+    height: 40,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    marginBottom: 10,
+    paddingLeft: 8,
+  },
   error: {
     color: 'red',
     marginBottom: 10,
@@ -147,3 +176,4 @@ const styles = StyleSheet.create({
 });
 
 export default Signup;
+
