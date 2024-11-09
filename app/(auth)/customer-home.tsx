@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView } from 'react-native';
-import auth from '@react-native-firebase/auth';
-import { router } from 'expo-router';
+import { auth } from '@/firebase';  // Import auth instance from firebase.ts
+import { signOut } from 'firebase/auth';  // Import signOut from firebase/auth
+import { useRouter } from 'expo-router';
 
 const Home = () => {
   type Venue = {
@@ -21,6 +22,7 @@ const Home = () => {
 
   const [venues, setVenues] = useState<Venue[]>([]);
   const [error, setError] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchVenues = async () => {
@@ -103,7 +105,7 @@ const Home = () => {
         ];
 
         setVenues(dummyData);
-      } catch (err : any) {
+      } catch (err: any) {
         setError(err.message);
       }
     };
@@ -125,11 +127,21 @@ const Home = () => {
     </View>
   );
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);  // Using the Firebase Authentication instance from firebase.ts
+      console.log('User signed out');
+      router.replace('/'); // Redirect to home or login page after sign out
+    } catch (err) {
+      console.error('Error signing out: ', err);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.text}>Home Screen</Text>
-        <TouchableOpacity onPress={() => auth().signOut()} style={styles.logoutButton}>
+        <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -215,56 +227,43 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     elevation: 5,
-    borderWidth: 1,
-    borderColor: '#E4E4E4',
-  },
+  }, 
   image: {
-    width: '100%',
+    width: 200,
     height: 150,
-    borderRadius: 12,
+    borderRadius: 10,
     marginBottom: 10,
   },
   venueName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 5,
   },
   venueLocation: {
     fontSize: 14,
-    color: '#555',
+    color: '#666',
+    marginBottom: 5,
   },
   venueType: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#777',
-  },
-  placeholderText: {
     fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-    marginTop: 20,
+    color: '#333',
+    marginBottom: 10,
   },
   venueDetails: {
     fontSize: 14,
-    color: '#555',
+    color: '#666',
     marginBottom: 5,
   },
   bookingsSection: {
     padding: 20,
-    backgroundColor: '#fff',
-    borderRadius: 15,
-    margin: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: '#E4E4E4',
+  },
+  placeholderText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
 });

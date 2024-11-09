@@ -1,8 +1,10 @@
 // app/login.tsx
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import auth from '@react-native-firebase/auth'; // Firebase Auth module
+// import auth from '@react-native-firebase/auth'; // Firebase Auth module
+import { auth } from '@/firebase';
 import { useRouter } from 'expo-router'; // Import useRouter from Expo Router
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const Login = () => {
   const router = useRouter(); // Use Expo Router for navigation
@@ -12,7 +14,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      const userCredential = await auth().signInWithEmailAndPassword(email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       // Make the API call to fetch user details
@@ -23,13 +25,17 @@ const Login = () => {
         },
         body: JSON.stringify({ user_id: user.uid }),
       });
+      console.log('Raw response:', response);  // Log the response object itself
+
 
       if (response.ok) {
         // Convert the response body to JSON
         const data = await response.json();
+        console.log("Response data:", data);
 
-        if (data && data.user_type) {
-          const userType = data.user_type; // Extract user type (e.g., 'customer' or 'owner')
+        if (data && data.data?.user_type) {
+          const userType = data.data?.user_type; 
+          console.log("User type received:", userType);
 
           if (userType === 'customer') {
             console.log('Navigating to customer home page...');
