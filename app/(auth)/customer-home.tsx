@@ -64,6 +64,7 @@ const Home = () => {
       
       {/* Horizontal Venues List */}
       <View style={styles.venueSection}>
+      <Text style={styles.sectionTitle}>Venues Near You</Text>
         <FlatList
           data={venues}
           renderItem={renderVenueCard}
