@@ -4,7 +4,14 @@ import auth from '@react-native-firebase/auth';
 import { router } from 'expo-router';
 
 const Home = () => {
-  const [venues, setVenues] = useState([]);
+  type Venue = {
+    id: string;
+    name: string;
+    location: string;
+    imageUrl: string;
+  };
+
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -36,7 +43,7 @@ const Home = () => {
         ];
 
         setVenues(dummyData);
-      } catch (err) {
+      } catch (err : any) {
         setError(err.message);
       }
     };
@@ -44,7 +51,7 @@ const Home = () => {
     fetchVenues();
   }, []);
 
-  const renderVenueCard = ({ item }) => (
+  const renderVenueCard = ({ item }: { item: Venue }) => (
     <View style={styles.card}>
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
       <Text style={styles.venueName}>{item.name}</Text>
