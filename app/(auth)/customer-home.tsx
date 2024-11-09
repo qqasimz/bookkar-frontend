@@ -71,7 +71,7 @@ const Home = () => {
       
       {/* Horizontal Venues List */}
       <View style={styles.venueSection}>
-      <Text style={styles.sectionTitle}>Venues Near You</Text>
+        <Text style={styles.sectionTitle}>Venues Near You</Text>
         <FlatList
           data={venues}
           renderItem={renderVenueCard}
@@ -95,61 +95,69 @@ const Home = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F1F5F8',  // Light background color for a clean look
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#4E73DF', // A cool blue color for the header
+    borderBottomLeftRadius: 15,
+    borderBottomRightRadius: 15,
   },
   text: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '600',
+    color: '#fff', // White text for good contrast
   },
   logoutButton: {
-    padding: 10,
-    backgroundColor: '#007bff',
-    borderRadius: 5,
+    padding: 12,
+    backgroundColor: '#FF5F5F', // Red color for logout for contrast
+    borderRadius: 25,
   },
   logoutButtonText: {
     color: '#fff',
     fontSize: 14,
+    fontWeight: 'bold',
   },
   errorText: {
-    color: 'red',
+    color: '#FF5F5F', // Red for error message
     marginBottom: 10,
     paddingHorizontal: 20,
   },
   venueSection: {
     paddingLeft: 20,
-    paddingVertical: 10,
+    paddingVertical: 15,
   },
   cardContainer: {
     paddingBottom: 20,
   },
   card: {
     width: 250,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#fff',
     padding: 15,
     marginRight: 10,
-    borderRadius: 10,
+    borderRadius: 15,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
     elevation: 5,
+    borderWidth: 1,
+    borderColor: '#E4E4E4',
   },
   image: {
     width: '100%',
     height: 150,
-    borderRadius: 10,
+    borderRadius: 12,
     marginBottom: 10,
   },
   venueName: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#333',
     marginBottom: 5,
   },
   venueLocation: {
@@ -160,9 +168,10 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#333',
   },
   placeholderText: {
     fontSize: 16,

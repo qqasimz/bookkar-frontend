@@ -22,20 +22,19 @@ const Signup = () => {
       const payload = {
         full_name: fullName,
         email: email,
-        password: password, 
-        user_type: userType, 
+        password: password,
+        user_type: userType,
       };
 
       // Log the payload for debugging
       console.log("Payload sent to backend:", payload);
-      
+
       const response = await fetch("https://bookar-d951ecf6cefd.herokuapp.com/api/v1/create-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-        // mode: "no-cors"
       });
 
       const rawResponse = await response.text();
@@ -52,7 +51,6 @@ const Signup = () => {
       } else {
         console.log("No content received in response");
       }
-
     } catch (err: any) {
       setError(err.message); // Set Firebase error or API error message
     }
@@ -67,6 +65,7 @@ const Signup = () => {
         placeholder="Full Name"
         value={fullName}
         onChangeText={setFullName}
+        placeholderTextColor="#888"
       />
 
       <TextInput
@@ -74,6 +73,8 @@ const Signup = () => {
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
+        placeholderTextColor="#888"
+        keyboardType="email-address"
       />
 
       <TextInput
@@ -82,6 +83,7 @@ const Signup = () => {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
+        placeholderTextColor="#888"
       />
 
       <View style={styles.pickerContainer}>
@@ -97,7 +99,7 @@ const Signup = () => {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Button title="Sign Up" onPress={handleSignup} />
+      <Button title="Sign Up" onPress={handleSignup} color="#4CAF50" />
 
       <Text style={styles.switchText} onPress={() => router.push('./')}>
         Already have an account? Login here.
@@ -111,47 +113,53 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f7f7f7', // Soft background color
     padding: 20,
+    paddingTop: 40,
   },
   heading: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 30,
+    color: '#333', // Darker text for better readability
   },
   input: {
     width: '100%',
-    height: 40,
-    borderColor: '#ccc',
+    height: 50,
+    borderColor: '#ddd',
     borderWidth: 1,
-    marginBottom: 10,
-    paddingLeft: 8,
+    borderRadius: 10,
+    marginBottom: 15,
+    paddingLeft: 15,
+    backgroundColor: '#fff', // White background for inputs
+    fontSize: 16,
   },
   pickerContainer: {
     width: '100%',
-    height: 40,
-    borderColor: '#ccc',
+    height: 50,
+    borderColor: '#ddd',
     borderWidth: 1,
-    marginBottom: 10,
-    justifyContent: 'center', // Centers the dropdown text vertically
+    borderRadius: 10,
+    marginBottom: 15,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
   },
   picker: {
     width: '100%',
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    marginBottom: 10,
-    paddingLeft: 8,
+    height: 50,
   },
   error: {
     color: 'red',
-    marginBottom: 10,
+    marginBottom: 15,
+    fontSize: 14,
+    textAlign: 'center',
   },
   switchText: {
-    color: 'blue',
-    marginTop: 10,
+    color: '#007BFF', // Blue color for login link
+    marginTop: 20,
     textAlign: 'center',
+    fontSize: 16,
   },
 });
 
 export default Signup;
-

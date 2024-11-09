@@ -1,6 +1,6 @@
 // app/login.tsx
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import auth from '@react-native-firebase/auth'; // Firebase Auth module
 import { useRouter } from 'expo-router'; // Import useRouter from Expo Router
 
@@ -55,11 +55,15 @@ const Login = () => {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.title}>Login</Text>
+
       <TextInput
         style={styles.input}
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
       />
       <TextInput
         style={styles.input}
@@ -68,11 +72,19 @@ const Login = () => {
         secureTextEntry
         onChangeText={setPassword}
       />
+      
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      <Button title="Login" onPress={handleLogin} />
-      <Text onPress={() => router.push('./signup')} style={styles.switchText}>
-        Don't have an account? Sign up here.
-      </Text>
+
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+        <Text style={styles.loginButtonText}>Login</Text>
+      </TouchableOpacity>
+
+      <View style={styles.signupContainer}>
+        <Text style={styles.switchText}>Don't have an account?</Text>
+        <TouchableOpacity onPress={() => router.push('./signup')}>
+          <Text style={styles.switchLink}>Sign up here.</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -81,25 +93,58 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    paddingHorizontal: 30,
+    backgroundColor: '#f9f9f9',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   input: {
-    height: 40,
-    borderColor: '#ccc',
+    height: 50,
+    borderColor: '#ddd',
     borderWidth: 1,
-    marginBottom: 10,
-    paddingLeft: 8,
+    marginBottom: 15,
+    borderRadius: 10,
+    paddingLeft: 15,
+    fontSize: 16,
+    backgroundColor: '#fff',
   },
   error: {
     color: 'red',
     marginBottom: 10,
+    textAlign: 'center',
+  },
+  loginButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   switchText: {
-    color: 'blue',
-    marginTop: 10,
+    fontSize: 16,
+    color: '#333',
     textAlign: 'center',
+  },
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  switchLink: {
+    color: '#007bff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
 export default Login;
-

@@ -20,7 +20,7 @@ const RootLayout = () => {
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
     return subscriber; // unsubscribe on unmount
-  }, []); // Add the useEffect hook here
+  }, []);
 
 
   useEffect(() => { 
@@ -46,6 +46,7 @@ const RootLayout = () => {
 
   return (
     <Stack>
+      <Stack.Screen name="index" options={ {headerShown: false }} />
       <Stack.Screen name="signup" options={{ title: 'Signup' }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
     </Stack>
