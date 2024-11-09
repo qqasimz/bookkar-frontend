@@ -28,51 +28,29 @@ const Signup = () => {
 
       // Log the payload for debugging
       console.log("Payload sent to backend:", payload);
-
-      // ----------------------------- (Code to restore when needed) -----------------------------
-      // Uncomment the following code when the actual backend API call is working:
-
-      const response = await fetch("https://bookar-backend.vercel.app/api/v1/create-user", {
+      
+      const response = await fetch("https://bookar-d951ecf6cefd.herokuapp.com/api/v1/create-user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
-        mode: "no-cors"
+        // mode: "no-cors"
       });
 
-      // const rawResponse = await response.text();
-      // console.log("Raw response:", rawResponse);
+      const rawResponse = await response.text();
+      console.log("Raw response:", rawResponse);
 
-      // if (rawResponse) {
-      //   const data = JSON.parse(rawResponse);
-      //   if (response.ok && data.status_code === 200) {
-      //     console.log("User created successfully on backend:", data.message);
-      //     router.push('./login'); // Navigate to login page
-      //   } else {
-      //     setError(data.message || "Signup failed");
-      //   }
-      // } else {
-      //   console.log("No content received in response");
-      // }
-
-      // ----------------------------- (End of code to restore) -----------------------------
-
-      // Simulate a successful response for now
-      const dummyResponse = {
-        status_code: 200,
-        message: "User created successfully on backend!",
-      };
-
-      // Log the dummy success message
-      console.log(dummyResponse.message);
-
-      // Show the dummy success message to the user
-      if (dummyResponse.status_code === 200) {
-        alert(dummyResponse.message); // Show an alert with the success message
-        router.push('./'); // Navigate to the login page after signup
+      if (rawResponse) {
+        const data = JSON.parse(rawResponse);
+        if (response.ok && data.status_code === 200) {
+          console.log("User created successfully on backend:", data.message);
+          router.push('./'); // Navigate to login page
+        } else {
+          setError(data.message || "Signup failed");
+        }
       } else {
-        setError(dummyResponse.message || "Signup failed");
+        console.log("No content received in response");
       }
 
     } catch (err: any) {

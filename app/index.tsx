@@ -12,43 +12,44 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-      // Firebase login
       const userCredential = await auth().signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
-      // Commented-out the real API call for now
-      // const response = await fetch('<your-api-url>/get-user-details', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({ user_id: user.uid }),
-      // });
-
-      // Dummy response to simulate the API response
-      const response = {
-        status_code: 200,
-        message: 'User has been fetched successfully',
-        data: {
-          user_type: 'customer', // Simulating as 'customer'
+      // Make the API call to fetch user details
+      const response = await fetch('http://bookar-d951ecf6cefd.herokuapp.com/api/v1/get-user-details', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      };
+        body: JSON.stringify({ user_id: user.uid }),
+      });
 
-      if (response.status_code === 200 && response.data) {
-        const userType = response.data.user_type; // Get user type from the dummy response
+      if (response.ok) {
+        // Convert the response body to JSON
+        const data = await response.json();
 
-        // Navigate based on the user type (customer or owner)
-        if (userType === 'customer') {
-          router.push('./customer-home'); // Navigate to customer home page
-        } else if (userType === 'owner') {
-          router.push('./owner-home'); // Navigate to owner home page
+        if (data && data.user_type) {
+          const userType = data.user_type; // Extract user type (e.g., 'customer' or 'owner')
+
+          if (userType === 'customer') {
+            console.log('Navigating to customer home page...');
+            router.push('./customer-home');
+          } else if (userType === 'owner') {
+            console.log('Navigating to owner home page...');
+            router.push('./owner-home');
+          } else {
+            setError('Invalid user type received.');
+          }
+        } else {
+          setError('Failed to retrieve user details or user type is missing.');
         }
       } else {
-        setError('Failed to retrieve user details or invalid user type.');
+        console.error('Error fetching user details:', response.statusText);
+        setError(`Error: ${response.status} ${response.statusText}`);
       }
-
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error) {
+      console.error('Network error:', error);
+      setError('Network error occurred. Please try again later.');
     }
   };
 
