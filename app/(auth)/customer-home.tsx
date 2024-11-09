@@ -9,6 +9,14 @@ const Home = () => {
     name: string;
     location: string;
     imageUrl: string;
+    capacity: number;  // Max capacity of the venue
+    venueType: string; // Type of venue (e.g., field, stadium, court)
+    facilities: string[]; // List of facilities available (e.g., lights, lockers, etc.)
+    availableTimeslots: string[]; // Available time slots for booking
+    pricing: string; // Price for booking (e.g., per hour)
+    ratings: number; // Average rating (1 to 5 stars)
+    bookingStatus: string; // Booking status (e.g., "Available", "Booked", "Under Maintenance")
+    address: string; // Full address
   };
 
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -36,10 +44,62 @@ const Home = () => {
 
         // Dummy data to simulate API response
         const dummyData = [
-          { id: '1', name: 'City Sports Arena', location: 'Downtown', imageUrl: 'https://via.placeholder.com/150' },
-          { id: '2', name: 'Beachside Courts', location: 'Coastline', imageUrl: 'https://via.placeholder.com/150' },
-          { id: '3', name: 'Mountain View Stadium', location: 'Uptown', imageUrl: 'https://via.placeholder.com/150' },
-          { id: '4', name: 'Greenfield Park', location: 'Suburbs', imageUrl: 'https://via.placeholder.com/150' },
+          {
+            id: '1',
+            name: 'City Sports Arena',
+            location: 'Downtown',
+            imageUrl: 'https://via.placeholder.com/150',
+            capacity: 5000,
+            venueType: 'Stadium',
+            facilities: ['Lights', 'Locker Rooms', 'Restrooms', 'Seating'],
+            availableTimeslots: ['9:00 AM - 11:00 AM', '12:00 PM - 2:00 PM', '3:00 PM - 5:00 PM'],
+            pricing: '$100/hr',
+            ratings: 4.5,
+            bookingStatus: 'Available',
+            address: '123 Main Street, Downtown, City',
+          },
+          {
+            id: '2',
+            name: 'Beachside Courts',
+            location: 'Coastline',
+            imageUrl: 'https://via.placeholder.com/150',
+            capacity: 100,
+            venueType: 'Tennis Court',
+            facilities: ['Lights', 'Restrooms', 'Seating'],
+            availableTimeslots: ['8:00 AM - 10:00 AM', '10:30 AM - 12:30 PM', '1:00 PM - 3:00 PM'],
+            pricing: '$50/hr',
+            ratings: 4.7,
+            bookingStatus: 'Available',
+            address: '456 Beach Road, Coastline',
+          },
+          {
+            id: '3',
+            name: 'Mountain View Stadium',
+            location: 'Uptown',
+            imageUrl: 'https://via.placeholder.com/150',
+            capacity: 8000,
+            venueType: 'Football Field',
+            facilities: ['Lights', 'Locker Rooms', 'Restrooms', 'VIP Seating'],
+            availableTimeslots: ['7:00 AM - 9:00 AM', '10:00 AM - 12:00 PM', '1:00 PM - 3:00 PM'],
+            pricing: '$200/hr',
+            ratings: 4.3,
+            bookingStatus: 'Booked', // Example of a venue that is already booked
+            address: '789 Mountain Road, Uptown',
+          },
+          {
+            id: '4',
+            name: 'Greenfield Park',
+            location: 'Suburbs',
+            imageUrl: 'https://via.placeholder.com/150',
+            capacity: 300,
+            venueType: 'Basketball Court',
+            facilities: ['Lights', 'Seating', 'Restrooms'],
+            availableTimeslots: ['6:00 AM - 8:00 AM', '9:00 AM - 11:00 AM', '12:00 PM - 2:00 PM'],
+            pricing: '$40/hr',
+            ratings: 4.0,
+            bookingStatus: 'Under Maintenance', // Example of a venue under maintenance
+            address: '101 Greenfield Ave, Suburbs',
+          },
         ];
 
         setVenues(dummyData);
@@ -56,6 +116,12 @@ const Home = () => {
       <Image source={{ uri: item.imageUrl }} style={styles.image} />
       <Text style={styles.venueName}>{item.name}</Text>
       <Text style={styles.venueLocation}>{item.location}</Text>
+      <Text style={styles.venueType}>{item.venueType}</Text>
+      <Text style={styles.venueDetails}>Capacity: {item.capacity}</Text>
+      <Text style={styles.venueDetails}>Price: {item.pricing}</Text>
+      <Text style={styles.venueDetails}>Rating: {item.ratings} ★</Text>
+      <Text style={styles.venueDetails}>Status: {item.bookingStatus}</Text>
+      <Text style={styles.venueDetails}>Address: {item.address}</Text>
     </View>
   );
 
@@ -91,6 +157,8 @@ const Home = () => {
     </ScrollView>
   );
 };
+
+export default Home;
 
 const styles = StyleSheet.create({
   container: {
@@ -130,6 +198,12 @@ const styles = StyleSheet.create({
     paddingLeft: 20,
     paddingVertical: 15,
   },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
   cardContainer: {
     paddingBottom: 20,
   },
@@ -164,19 +238,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#555',
   },
-  bookingsSection: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+  venueType: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#777',
   },
   placeholderText: {
     fontSize: 16,
-    color: '#777',
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  venueDetails: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  bookingsSection: {
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    margin: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#E4E4E4',
   },
 });
-
-export default Home;
