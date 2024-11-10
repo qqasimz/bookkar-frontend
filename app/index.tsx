@@ -1,23 +1,38 @@
-// app/login.tsx
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-// import auth from '@react-native-firebase/auth'; // Firebase Auth module
-import { auth } from '@/firebase';
-import { useRouter } from 'expo-router'; // Import useRouter from Expo Router
+import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useFonts, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
+import AppLoading from 'expo-app-loading'; // For font loading
+import { Ionicons } from '@expo/vector-icons';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/firebase'; // Assuming your Firebase is set up
+import { useRouter } from 'expo-router';
 
 const Login = () => {
-  const router = useRouter(); // Use Expo Router for navigation
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const router = useRouter();
+
+  let [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+  });
+
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  }
 
   const handleLogin = async () => {
+    setError('');
+    if (!email || !password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Make the API call to fetch user details
       const response = await fetch('http://bookar-d951ecf6cefd.herokuapp.com/api/v1/get-user-details', {
         method: 'POST',
         headers: {
@@ -25,70 +40,75 @@ const Login = () => {
         },
         body: JSON.stringify({ user_id: user.uid }),
       });
-      console.log('Raw response:', response);  // Log the response object itself
-
 
       if (response.ok) {
-        // Convert the response body to JSON
         const data = await response.json();
-        console.log("Response data:", data);
+        const userType = data?.data?.user_type;
 
-        if (data && data.data?.user_type) {
-          const userType = data.data?.user_type; 
-          console.log("User type received:", userType);
-
-          if (userType === 'customer') {
-            console.log('Navigating to customer home page...');
-            router.push('./customer-home');
-          } else if (userType === 'owner') {
-            console.log('Navigating to owner home page...');
-            router.push('./owner-home');
-          } else {
-            setError('Invalid user type received.');
-          }
+        if (userType === 'customer') {
+          router.push('./customer-home');
+        } else if (userType === 'owner') {
+          router.push('./owner-home');
         } else {
-          setError('Failed to retrieve user details or user type is missing.');
+          setError('Invalid user type received.');
         }
       } else {
-        console.error('Error fetching user details:', response.statusText);
-        setError(`Error: ${response.status} ${response.statusText}`);
+        setError('Error fetching user details.');
       }
-    } catch (error) {
-      console.error('Network error:', error);
-      setError('Network error occurred. Please try again later.');
+    } catch (err) {
+      setError('Failed to login. Please check your credentials.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Login to BookKar</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        secureTextEntry
-        onChangeText={setPassword}
-      />
-      
+      <View style={styles.inputContainer}>
+        <Ionicons name="person-outline" size={20} color="#C48A6A" style={styles.icon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+          placeholderTextColor="#C48A6A"
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Ionicons name="lock-closed-outline" size={20} color="#C48A6A" style={styles.icon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          secureTextEntry
+          onChangeText={setPassword}
+          placeholderTextColor="#C48A6A"
+        />
+      </View>
+
       {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <TouchableOpacity style={styles.rememberMe}>
+        <Text style={styles.rememberText}>Remember me</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
+      <Text style={styles.orText}>or continue with</Text>
+
+      <TouchableOpacity style={styles.googleButton}>
+        <Text style={styles.googleButtonText}>G</Text>
+      </TouchableOpacity>
+
       <View style={styles.signupContainer}>
-        <Text style={styles.switchText}>Don't have an account?</Text>
+        <Text style={styles.switchText}>Don't have an account? </Text>
         <TouchableOpacity onPress={() => router.push('./signup')}>
-          <Text style={styles.switchLink}>Sign up here.</Text>
+          <Text style={styles.switchLink}>Sign up</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -100,56 +120,94 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 30,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#0D1411',
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '600',
+    color: '#C48A6A',
     textAlign: 'center',
     marginBottom: 20,
+    fontFamily: 'Poppins_600SemiBold',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#5A3C2F',
+    borderRadius: 12,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+  },
+  icon: {
+    marginRight: 10,
   },
   input: {
+    flex: 1,
     height: 50,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    marginBottom: 15,
-    borderRadius: 10,
-    paddingLeft: 15,
     fontSize: 16,
-    backgroundColor: '#fff',
+    color: '#FFF',
+    fontFamily: 'Poppins_400Regular',
   },
   error: {
     color: 'red',
     marginBottom: 10,
     textAlign: 'center',
   },
+  rememberMe: {
+    alignItems: 'flex-start',
+    marginBottom: 15,
+  },
+  rememberText: {
+    color: '#C48A6A',
+    fontSize: 14,
+    fontFamily: 'Poppins_400Regular',
+  },
   loginButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#6E4B38',
     paddingVertical: 12,
     borderRadius: 10,
-    marginBottom: 20,
     alignItems: 'center',
+    marginBottom: 20,
   },
   loginButtonText: {
-    color: '#fff',
+    color: '#FFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontFamily: 'Poppins_600SemiBold',
   },
-  switchText: {
-    fontSize: 16,
-    color: '#333',
+  orText: {
+    color: '#C48A6A',
     textAlign: 'center',
+    marginVertical: 10,
+    fontSize: 14,
+    fontFamily: 'Poppins_400Regular',
+  },
+  googleButton: {
+    backgroundColor: '#5A3C2F',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  googleButtonText: {
+    color: '#FFF',
+    fontSize: 20,
+    fontFamily: 'Poppins_600SemiBold',
   },
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
+  },
+  switchText: {
+    fontSize: 14,
+    color: '#FFF',
+    fontFamily: 'Poppins_400Regular',
   },
   switchLink: {
-    color: '#007bff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#C48A6A',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Poppins_600SemiBold',
   },
 });
 

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
+import { useFonts, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
+import AppLoading from 'expo-app-loading';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
@@ -11,6 +13,15 @@ const Signup = () => {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  let [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+  });
+
+  if (!fontsLoaded) {
+    return <AppLoading />;
+  }
+
   const handleSignup = async () => {
     if (!fullName || !email || !password) {
       setError('Please fill in all fields');
@@ -18,7 +29,6 @@ const Signup = () => {
     }
 
     try {
-      // Create the payload
       const payload = {
         full_name: fullName,
         email: email,
@@ -26,33 +36,24 @@ const Signup = () => {
         user_type: userType,
       };
 
-      // Log the payload for debugging
-      console.log("Payload sent to backend:", payload);
-
-      const response = await fetch("https://bookar-d951ecf6cefd.herokuapp.com/api/v1/create-user", {
-        method: "POST",
+      const response = await fetch('https://bookar-d951ecf6cefd.herokuapp.com/api/v1/create-user', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       });
 
       const rawResponse = await response.text();
-      console.log("Raw response:", rawResponse);
+      const data = JSON.parse(rawResponse);
 
-      if (rawResponse) {
-        const data = JSON.parse(rawResponse);
-        if (response.ok && data.status_code === 200) {
-          console.log("User created successfully on backend:", data.message);
-          router.push('./'); // Navigate to login page
-        } else {
-          setError(data.message || "Signup failed");
-        }
+      if (response.ok && data.status_code === 200) {
+        router.push('./'); // Navigate to login page
       } else {
-        console.log("No content received in response");
+        setError(data.message || 'Signup failed');
       }
-    } catch (err: any) {
-      setError(err.message); // Set Firebase error or API error message
+    } catch (err : any) {
+      setError(err.message); // Set API error message
     }
   };
 
@@ -65,7 +66,7 @@ const Signup = () => {
         placeholder="Full Name"
         value={fullName}
         onChangeText={setFullName}
-        placeholderTextColor="#888"
+        placeholderTextColor="#C48A6A"
       />
 
       <TextInput
@@ -73,7 +74,7 @@ const Signup = () => {
         placeholder="Email"
         value={email}
         onChangeText={setEmail}
-        placeholderTextColor="#888"
+        placeholderTextColor="#C48A6A"
         keyboardType="email-address"
       />
 
@@ -83,7 +84,7 @@ const Signup = () => {
         secureTextEntry
         value={password}
         onChangeText={setPassword}
-        placeholderTextColor="#888"
+        placeholderTextColor="#C48A6A"
       />
 
       <View style={styles.pickerContainer}>
@@ -99,10 +100,12 @@ const Signup = () => {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Button title="Sign Up" onPress={handleSignup} color="#4CAF50" />
+      <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
+        <Text style={styles.signupButtonText}>Sign Up</Text>
+      </TouchableOpacity>
 
       <Text style={styles.switchText} onPress={() => router.push('./')}>
-        Already have an account? Login here.
+        Already have an account? <Text style={styles.switchLink}>Login here.</Text>
       </Text>
     </View>
   );
@@ -112,53 +115,68 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f7f7f7', // Soft background color
-    padding: 20,
-    paddingTop: 40,
+    paddingHorizontal: 30,
+    backgroundColor: '#0D1411',
   },
   heading: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 30,
-    color: '#333', // Darker text for better readability
+    fontSize: 32,
+    fontWeight: '600',
+    color: '#C48A6A',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontFamily: 'Poppins_600SemiBold',
   },
   input: {
-    width: '100%',
     height: 50,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: '#5A3C2F',
     marginBottom: 15,
-    paddingLeft: 15,
-    backgroundColor: '#fff', // White background for inputs
+    borderRadius: 12,
+    paddingHorizontal: 10,
     fontSize: 16,
+    color: '#FFF',
+    fontFamily: 'Poppins_400Regular',
   },
   pickerContainer: {
-    width: '100%',
-    height: 50,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: '#5A3C2F',
+    borderRadius: 12,
     marginBottom: 15,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
   },
   picker: {
-    width: '100%',
     height: 50,
+    color: '#FFF',
+    fontFamily: 'Poppins_400Regular',
   },
   error: {
     color: 'red',
-    marginBottom: 15,
-    fontSize: 14,
+    marginBottom: 10,
     textAlign: 'center',
+    fontSize: 14,
+    fontFamily: 'Poppins_400Regular',
+  },
+  signupButton: {
+    backgroundColor: '#6E4B38',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  signupButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600',
+    fontFamily: 'Poppins_600SemiBold',
   },
   switchText: {
-    color: '#007BFF', // Blue color for login link
-    marginTop: 20,
+    fontSize: 14,
+    color: '#FFF',
     textAlign: 'center',
-    fontSize: 16,
+    fontFamily: 'Poppins_400Regular',
+  },
+  switchLink: {
+    color: '#C48A6A',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Poppins_600SemiBold',
   },
 });
 
