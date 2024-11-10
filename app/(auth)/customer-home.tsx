@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { auth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'expo-router';
@@ -7,20 +7,23 @@ import VenueCard from '../components/VenueCard';
 import { BookingProvider, useBookings } from '../contexts/BookingContext';
 import Notification from '../components/Notification';
 
+type TimeSlot = {
+  start: string;
+  end: string;
+};
+
 type Venue = {
   id: string;
   name: string;
   location: string;
-  imageUrl: string;
+  image_url: string;
   capacity: number;
-  venueType: string;
-  facilities: string[];
-  availableTimeslots: string[];
-  pricing: string;
-  ratings: number;
-  bookingStatus: string;
+  venue_type: string;
+  available_time_slots: TimeSlot[];
+  price: string;
+  booking_status: string;
   address: string;
-  description: string;
+  description?: string;
 };
 
 const BookingsList = () => {
@@ -51,18 +54,17 @@ const BookingsList = () => {
                 <Text style={styles.bookingVenueName}>{item.venueName}</Text>
                 <Text style={styles.bookingInfo}>Date: {item.date}</Text>
                 <Text style={styles.bookingInfo}>Time: {item.timeSlot}</Text>
-                <Text style={[
-                  styles.bookingStatus,
-                  item.status === 'confirmed' ? styles.statusConfirmed : styles.statusCancelled
-                ]}>
+                <Text
+                  style={[
+                    styles.bookingStatus,
+                    item.status === 'confirmed' ? styles.statusConfirmed : styles.statusCancelled,
+                  ]}
+                >
                   Status: {item.status}
                 </Text>
               </View>
               {item.status === 'confirmed' && (
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => handleCancelBooking(item.id)}
-                >
+                <TouchableOpacity style={styles.cancelButton} onPress={() => handleCancelBooking(item.id)}>
                   <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
               )}
@@ -78,6 +80,7 @@ const BookingsList = () => {
 const CustomerHome = () => {
   const router = useRouter();
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState({
     visible: false,
@@ -89,95 +92,48 @@ const CustomerHome = () => {
   useEffect(() => {
     const fetchVenues = async () => {
       try {
-        // Uncomment this section once the backend is ready
-        /*
-        const response = await fetch('https://bookar-backend.vercel.app/api/v1/fetch-venues', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        
+        const response = await fetch('http://bookar-d951ecf6cefd.herokuapp.com/api/v1/get-all-venues');
         if (!response.ok) {
           throw new Error('Failed to fetch venues');
         }
-
+  
         const data = await response.json();
-        setVenues(data.venues);
-        */
-
-        const dummyData: Venue[] = [
-          {
-            id: '1',
-            name: 'City Sports Arena',
-            location: 'Downtown',
-            imageUrl: 'https://via.placeholder.com/150',
-            capacity: 5000,
-            venueType: 'Stadium',
-            facilities: ['Lights', 'Locker Rooms', 'Restrooms', 'Seating'],
-            availableTimeslots: ['9:00 AM - 11:00 AM', '12:00 PM - 2:00 PM', '3:00 PM - 5:00 PM'],
-            pricing: '$100/hr',
-            ratings: 4.5,
-            bookingStatus: 'Available',
-            address: '123 Main Street, Downtown, City',
-            description: 'A state-of-the-art sports arena featuring multiple courts, professional lighting, and modern amenities. Perfect for tournaments and professional matches.'
-          },
-          {
-            id: '2',
-            name: 'Beachside Courts',
-            location: 'Coastline',
-            imageUrl: 'https://via.placeholder.com/150',
-            capacity: 100,
-            venueType: 'Tennis Court',
-            facilities: ['Lights', 'Restrooms', 'Seating'],
-            availableTimeslots: ['8:00 AM - 10:00 AM', '10:30 AM - 12:30 PM', '1:00 PM - 3:00 PM'],
-            pricing: '$50/hr',
-            ratings: 4.7,
-            bookingStatus: 'Available',
-            address: '456 Beach Road, Coastline',
-            description: 'Beautiful beachside tennis courts with stunning ocean views. Professionally maintained surfaces and equipment rental available.'
-          },
-          {
-            id: '3',
-            name: 'Mountain View Stadium',
-            location: 'Uptown',
-            imageUrl: 'https://via.placeholder.com/150',
-            capacity: 8000,
-            venueType: 'Football Field',
-            facilities: ['Lights', 'Locker Rooms', 'Restrooms', 'VIP Seating'],
-            availableTimeslots: ['7:00 AM - 9:00 AM', '10:00 AM - 12:00 PM', '1:00 PM - 3:00 PM'],
-            pricing: '$200/hr',
-            ratings: 4.3,
-            bookingStatus: 'Booked',
-            address: '789 Mountain Road, Uptown',
-            description: 'Premier football stadium with VIP amenities and spectacular mountain views. Ideal for professional matches and tournaments.'
-          },
-          {
-            id: '4',
-            name: 'Greenfield Park',
-            location: 'Suburbs',
-            imageUrl: 'https://via.placeholder.com/150',
-            capacity: 300,
-            venueType: 'Basketball Court',
-            facilities: ['Lights', 'Seating', 'Restrooms'],
-            availableTimeslots: ['6:00 AM - 8:00 AM', '9:00 AM - 11:00 AM', '12:00 PM - 2:00 PM'],
-            pricing: '$40/hr',
-            ratings: 4.0,
-            bookingStatus: 'Under Maintenance',
-            address: '101 Greenfield Ave, Suburbs',
-            description: 'Community basketball court with excellent facilities and convenient suburban location. Perfect for casual games and local tournaments.'
-          }
-        ];
-
-        setVenues(dummyData);
+        console.log(data); // Log full response to confirm structure
+  
+        // Safely access data.data.venues
+        if (data.data && Array.isArray(data.data.venues)) {
+          const mappedVenues = data.data.venues.map((venue: any) => ({
+            id: venue.venue_id, // Map venue_id to id
+            name: venue.name,
+            location: venue.location,
+            image_url: venue.image_url,
+            capacity: Number(venue.capacity),
+            venue_type: venue.venue_type,
+            available_time_slots: venue.available_time_slots,
+            price: venue.price,
+            booking_status: venue.booking_status,
+            address: venue.address,
+            description: venue.description || '',
+          }));
+  
+          setVenues(mappedVenues); // Update state
+        } else {
+          console.error('No venues found or venues is not an array.');
+          setVenues([]); // Set an empty array if no venues found
+        }
       } catch (err: any) {
         setError(err.message);
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
-
+  
     fetchVenues();
   }, []);
+  
+  
+  
 
   const handleSignOut = async () => {
     try {
@@ -189,7 +145,7 @@ const CustomerHome = () => {
   };
 
   const handleBooking = (venueId: string, date: string, timeSlot: string) => {
-    const venue = venues.find(v => v.id === venueId);
+    const venue = venues.find((v) => v.id === venueId);
     if (venue) {
       addBooking({
         venueId,
@@ -199,7 +155,7 @@ const CustomerHome = () => {
         status: 'confirmed',
         userId: auth.currentUser?.uid || '',
       });
-      
+
       setNotification({
         visible: true,
         message: 'Booking confirmed successfully!',
@@ -218,23 +174,18 @@ const CustomerHome = () => {
       </View>
 
       {error && <Text style={styles.errorText}>{error}</Text>}
-
-      <View style={styles.venueSection}>
-        <Text style={styles.sectionTitle}>Venues Near You</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.venueList}
-        >
-          {venues.map((venue) => (
-            <VenueCard
-              key={venue.id}
-              venue={venue}
-              onBooking={handleBooking}
-            />
-          ))}
-        </ScrollView>
-      </View>
+      {loading ? (
+        <ActivityIndicator size="large" color="#4E73DF" style={{ marginTop: 20 }} />
+      ) : (
+        <View style={styles.venueSection}>
+          <Text style={styles.sectionTitle}>Venues Near You</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.venueList}>
+            {venues.map((venue) => (
+              <VenueCard key={venue.id} venue={venue} onBooking={handleBooking} />
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <BookingsList />
 
@@ -242,7 +193,7 @@ const CustomerHome = () => {
         visible={notification.visible}
         message={notification.message}
         type={notification.type}
-        onHide={() => setNotification(prev => ({ ...prev, visible: false }))}
+        onHide={() => setNotification((prev) => ({ ...prev, visible: false }))}
       />
     </ScrollView>
   );

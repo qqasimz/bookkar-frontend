@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Image, ScrollView, SafeAreaView } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { format } from 'date-fns';
+
+type TimeSlot = {
+  start: string;
+  end: string;
+};
 
 type Venue = {
   id: string;
   name: string;
   location: string;
-  imageUrl: string;
+  image_url: string;
   capacity: number;
-  venueType: string;
-  facilities: string[];
-  availableTimeslots: string[];
-  pricing: string;
-  ratings: number;
-  bookingStatus: string;
+  venue_type: string;
+  available_time_slots: TimeSlot[];
+  price: string;
+  booking_status: string;
   address: string;
   description?: string;
 };
@@ -50,12 +52,24 @@ const VenueCard: React.FC<VenueCardProps> = ({ venue, onBooking }) => {
     outputRange: ['180deg', '360deg'],
   });
 
+  const frontOpacity = flipAnimation.interpolate({
+    inputRange: [89, 90],
+    outputRange: [1, 0],
+  });
+
+  const backOpacity = flipAnimation.interpolate({
+    inputRange: [89, 90],
+    outputRange: [0, 1],
+  });
+
   const frontAnimatedStyle = {
     transform: [{ rotateY: frontInterpolate }],
+    opacity: frontOpacity,
   };
 
   const backAnimatedStyle = {
     transform: [{ rotateY: backInterpolate }],
+    opacity: backOpacity,
   };
 
   const handleDateSelect = (date: any) => {
@@ -63,8 +77,9 @@ const VenueCard: React.FC<VenueCardProps> = ({ venue, onBooking }) => {
     setSelectedTimeSlot('');
   };
 
-  const handleTimeSlotSelect = (timeSlot: string) => {
-    setSelectedTimeSlot(timeSlot);
+  const handleTimeSlotSelect = (slot: TimeSlot) => {
+    const formattedSlot = `${slot.start.split('T')[1].slice(0, 5)} - ${slot.end.split('T')[1].slice(0, 5)}`;
+    setSelectedTimeSlot(formattedSlot);
   };
 
   const handleBooking = () => {
@@ -79,13 +94,6 @@ const VenueCard: React.FC<VenueCardProps> = ({ venue, onBooking }) => {
   const renderFacilities = () => (
     <View style={styles.facilitiesContainer}>
       <Text style={styles.sectionTitle}>Facilities</Text>
-      <View style={styles.facilitiesGrid}>
-        {venue.facilities.map((facility) => (
-          <View key={facility} style={styles.facilityTag}>
-            <Text style={styles.facilityText}>{facility}</Text>
-          </View>
-        ))}
-      </View>
     </View>
   );
 
@@ -93,14 +101,14 @@ const VenueCard: React.FC<VenueCardProps> = ({ venue, onBooking }) => {
     <Animated.View style={[styles.card, frontAnimatedStyle]}>
       <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
         <Image 
-          source={{ uri: venue.imageUrl }} 
+          source={{ uri: venue.image_url }} 
           style={styles.image}
           resizeMode="cover"
         />
         <View style={styles.contentContainer}>
           <Text style={styles.venueName}>{venue.name}</Text>
           <Text style={styles.venueLocation}>{venue.location}</Text>
-          <Text style={styles.venueType}>{venue.venueType}</Text>
+          <Text style={styles.venueType}>{venue.venue_type}</Text>
           
           <View style={styles.detailsGrid}>
             <View style={styles.detailItem}>
@@ -109,18 +117,13 @@ const VenueCard: React.FC<VenueCardProps> = ({ venue, onBooking }) => {
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Price</Text>
-              <Text style={styles.detailValue}>{venue.pricing}</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Rating</Text>
-              <Text style={styles.detailValue}>{venue.ratings} ★</Text>
+              <Text style={styles.detailValue}>{venue.price}</Text>
             </View>
           </View>
 
-          <Text style={styles.statusText}>Status: {venue.bookingStatus}</Text>
+          <Text style={styles.statusText}>Status: {venue.booking_status}</Text>
           <Text style={styles.addressText}>Address: {venue.address}</Text>
           
-          {renderFacilities()}
         </View>
       </ScrollView>
       <TouchableOpacity style={styles.flipButton} onPress={flipCard}>
@@ -145,7 +148,7 @@ const VenueCard: React.FC<VenueCardProps> = ({ venue, onBooking }) => {
           <Calendar
             onDayPress={handleDateSelect}
             markedDates={{
-              [selectedDate]: { selected: true, selectedColor: '#4E73DF' }
+              [selectedDate]: { selected: true, selectedColor: '#4E73DF' },
             }}
             style={styles.calendar}
             theme={{
@@ -159,22 +162,22 @@ const VenueCard: React.FC<VenueCardProps> = ({ venue, onBooking }) => {
             <View style={styles.timeSlotContainer}>
               <Text style={styles.timeSlotTitle}>Available Time Slots:</Text>
               <View style={styles.timeSlotGrid}>
-                {venue.availableTimeslots.map((slot) => (
+                {venue.available_time_slots.map((slot) => (
                   <TouchableOpacity
-                    key={slot}
+                    key={slot.start}
                     style={[
                       styles.timeSlot,
-                      selectedTimeSlot === slot && styles.selectedTimeSlot,
+                      selectedTimeSlot === `${slot.start} - ${slot.end}` && styles.selectedTimeSlot,
                     ]}
                     onPress={() => handleTimeSlotSelect(slot)}
                   >
                     <Text 
                       style={[
                         styles.timeSlotText,
-                        selectedTimeSlot === slot && styles.selectedTimeSlotText
+                        selectedTimeSlot === `${slot.start} - ${slot.end}` && styles.selectedTimeSlotText,
                       ]}
                     >
-                      {slot}
+                      {`${slot.start.split('T')[1].slice(0, 5)} - ${slot.end.split('T')[1].slice(0, 5)}`}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -233,7 +236,7 @@ const styles = StyleSheet.create({
     transform: [{ rotateY: '180deg' }],
   },
   scrollContent: {
-    paddingBottom: 60, // Space for buttons
+    paddingBottom: 60,
   },
   contentContainer: {
     padding: 10,
