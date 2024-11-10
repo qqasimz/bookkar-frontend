@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal, ScrollView, Alert } from 'react-native';
 import { auth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'expo-router';
-import VenueCard from '../components/VenueCard';
-import { BookingProvider, useBookings } from '../contexts/BookingContext';
-import Notification from '../components/Notification';
+import { Calendar } from 'react-native-calendars';
 
 type TimeSlot = {
   start: string;
@@ -26,114 +24,96 @@ type Venue = {
   description?: string;
 };
 
-const BookingsList = () => {
-  const { bookings, cancelBooking } = useBookings();
-  const [notification, setNotification] = useState({ visible: false, message: '', type: 'success' as const });
-
-  const handleCancelBooking = (bookingId: string) => {
-    cancelBooking(bookingId);
-    setNotification({
-      visible: true,
-      message: 'Booking cancelled successfully',
-      type: 'success',
-    });
-  };
-
-  return (
-    <View style={styles.bookingsSection}>
-      <Text style={styles.sectionTitle}>My Bookings</Text>
-      {bookings.length === 0 ? (
-        <Text style={styles.placeholderText}>You don't have any bookings yet.</Text>
-      ) : (
-        <FlatList
-          data={bookings}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.bookingItem}>
-              <View style={styles.bookingDetails}>
-                <Text style={styles.bookingVenueName}>{item.venueName}</Text>
-                <Text style={styles.bookingInfo}>Date: {item.date}</Text>
-                <Text style={styles.bookingInfo}>Time: {item.timeSlot}</Text>
-                <Text
-                  style={[
-                    styles.bookingStatus,
-                    item.status === 'confirmed' ? styles.statusConfirmed : styles.statusCancelled,
-                  ]}
-                >
-                  Status: {item.status}
-                </Text>
-              </View>
-              {item.status === 'confirmed' && (
-                <TouchableOpacity style={styles.cancelButton} onPress={() => handleCancelBooking(item.id)}>
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )}
-          style={styles.bookingsList}
-        />
-      )}
-    </View>
-  );
-};
-
 const CustomerHome = () => {
   const router = useRouter();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [notification, setNotification] = useState({
-    visible: false,
-    message: '',
-    type: 'success' as const,
-  });
-  const { addBooking } = useBookings();
+  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
 
   useEffect(() => {
     const fetchVenues = async () => {
       try {
         const response = await fetch('http://bookar-d951ecf6cefd.herokuapp.com/api/v1/get-all-venues');
-        if (!response.ok) {
-          throw new Error('Failed to fetch venues');
-        }
-  
+        if (!response.ok) throw new Error('Failed to fetch venues');
+
         const data = await response.json();
-        console.log(data); // Log full response to confirm structure
-  
-        // Safely access data.data.venues
-        if (data.data && Array.isArray(data.data.venues)) {
-          const mappedVenues = data.data.venues.map((venue: any) => ({
-            id: venue.venue_id, // Map venue_id to id
-            name: venue.name,
-            location: venue.location,
-            image_url: venue.image_url,
-            capacity: Number(venue.capacity),
-            venue_type: venue.venue_type,
-            available_time_slots: venue.available_time_slots,
-            price: venue.price,
-            booking_status: venue.booking_status,
-            address: venue.address,
-            description: venue.description || '',
-          }));
-  
-          setVenues(mappedVenues); // Update state
-        } else {
-          console.error('No venues found or venues is not an array.');
-          setVenues([]); // Set an empty array if no venues found
-        }
+        const venueList = data?.data?.venues || [];
+        const mappedVenues = venueList.map((venue: any) => ({
+          id: venue.venue_id,
+          name: venue.name,
+          location: venue.location,
+          image_url: venue.image_url,
+          capacity: Number(venue.capacity),
+          venue_type: venue.venue_type,
+          available_time_slots: venue.available_time_slots,
+          price: venue.price,
+          booking_status: venue.booking_status,
+          address: venue.address,
+          description: venue.description || '',
+        }));
+        setVenues(mappedVenues);
       } catch (err: any) {
         setError(err.message);
-        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchVenues();
   }, []);
+
+  const handleShowModal = (venue: Venue) => {
+    setSelectedVenue(venue);
+    setAvailableSlots(venue.available_time_slots);
+    setModalVisible(true);
+  };
+
+  const handleBooking = async () => {
+    if (!selectedSlot) {
+      console.log('Error', 'Please select a time slot to book.');
+      return;
+    }
+
+    const bookingPayload = {
+      user_id: auth.currentUser?.uid || 'test-user-id', // Replace with actual user ID
+      venue_id: selectedVenue?.id,
+      time_slot: selectedSlot,
+    };
+
+    console.log('Booking Payload:', JSON.stringify(bookingPayload, null, 2));
+
+    try {
+      const response = await fetch('http://bookar-d951ecf6cefd.herokuapp.com/api/v1/book-venue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingPayload),
+      });
+
+      console.log('Booking Response:', response);
+
+      const responseData = await response.json();
+      console.log('Booking Response JSON:', responseData);
   
-  
-  
+      if (response.ok) {
+        console.log('Success', 'Your booking was successful!');
+        Alert.alert('Success', 'Your booking was successful!');
+        setModalVisible(false); // Close the modal after successful booking
+      } else {
+        console.log('Error', responseData.message || 'Booking failed.');
+        Alert.alert('Error', responseData.message || 'Booking failed.');
+      } 
+    } catch (error) {
+      console.log('Booking error:', error);
+      console.log('Error', 'Something went wrong. Please try again later.');
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -141,26 +121,6 @@ const CustomerHome = () => {
       router.replace('/');
     } catch (err) {
       console.error('Error signing out: ', err);
-    }
-  };
-
-  const handleBooking = (venueId: string, date: string, timeSlot: string) => {
-    const venue = venues.find((v) => v.id === venueId);
-    if (venue) {
-      addBooking({
-        venueId,
-        venueName: venue.name,
-        date,
-        timeSlot,
-        status: 'confirmed',
-        userId: auth.currentUser?.uid || '',
-      });
-
-      setNotification({
-        visible: true,
-        message: 'Booking confirmed successfully!',
-        type: 'success',
-      });
     }
   };
 
@@ -177,24 +137,80 @@ const CustomerHome = () => {
       {loading ? (
         <ActivityIndicator size="large" color="#4E73DF" style={{ marginTop: 20 }} />
       ) : (
-        <View style={styles.venueSection}>
-          <Text style={styles.sectionTitle}>Venues Near You</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.venueList}>
-            {venues.map((venue) => (
-              <VenueCard key={venue.id} venue={venue} onBooking={handleBooking} />
-            ))}
-          </ScrollView>
-        </View>
+        <FlatList
+          data={venues}
+          horizontal
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.venueCard}>
+              <Text style={styles.venueName}>{item.name}</Text>
+              <Text>Location: {item.location}</Text>
+              <Text>Type: {item.venue_type}</Text>
+              <Text>Price: {item.price}</Text>
+              <TouchableOpacity style={styles.bookButton} onPress={() => handleShowModal(item)}>
+                <Text style={styles.bookButtonText}>View Details</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.venueList}
+        />
       )}
 
-      <BookingsList />
+      <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
+        <ScrollView style={styles.modalContainer}>
+          <Text style={styles.header}>{selectedVenue?.name}</Text>
+          <Text style={styles.details}>Location: {selectedVenue?.location}</Text>
+          <Text style={styles.details}>Capacity: {selectedVenue?.capacity}</Text>
+          <Text style={styles.details}>Type: {selectedVenue?.venue_type}</Text>
+          <Text style={styles.details}>Price: {selectedVenue?.price}</Text>
+          <Text style={styles.details}>Address: {selectedVenue?.address}</Text>
+          <Text style={styles.details}>{selectedVenue?.description}</Text>
 
-      <Notification
-        visible={notification.visible}
-        message={notification.message}
-        type={notification.type}
-        onHide={() => setNotification((prev) => ({ ...prev, visible: false }))}
-      />
+          <Text style={styles.subHeader}>Select a Date:</Text>
+          <Calendar
+            onDayPress={(day : any) => setSelectedDate(day.dateString)}
+            markedDates={{ [selectedDate]: { selected: true, selectedColor: 'blue' } }}
+            style={styles.calendar}
+          />
+
+          {selectedDate && (
+            <>
+              <Text style={styles.subHeader}>Available Slots:</Text>
+              {availableSlots.length === 0 ? (
+                <Text style={styles.errorText}>No available slots for this date.</Text>
+              ) : (
+                availableSlots
+                  .filter((slot) => slot.start.startsWith(selectedDate))
+                  .map((slot, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.slot,
+                        selectedSlot?.start === slot.start ? styles.selectedSlot : null,
+                      ]}
+                      onPress={() => setSelectedSlot(slot)}
+                    >
+                      <Text style={styles.slotText}>
+                        {slot.start.split('T')[1].slice(0, 5)} - {slot.end.split('T')[1].slice(0, 5)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))
+              )}
+            </>
+          )}
+
+          {selectedSlot && (
+            <TouchableOpacity style={styles.bookButton} onPress={handleBooking}>
+              <Text style={styles.bookButtonText}>Confirm Booking</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </Modal>
     </ScrollView>
   );
 };
@@ -233,81 +249,79 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  venueSection: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
-  },
   venueList: {
-    paddingRight: 20,
+    paddingLeft: 20,
   },
-  bookingsSection: {
-    padding: 20,
-  },
-  bookingsList: {
-    marginTop: 10,
-  },
-  bookingItem: {
+  venueCard: {
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 15,
-    marginBottom: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    marginRight: 10,
     elevation: 2,
+    width: 250,
   },
-  bookingDetails: {
-    flex: 1,
-  },
-  bookingVenueName: {
-    fontSize: 16,
+  venueName: {
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#333',
+  },
+  bookButton: {
+    marginTop: 10,
+    backgroundColor: '#4E73DF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  bookButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#F1F5F8',
+  },
+  details: {
+    fontSize: 16,
     color: '#333',
     marginBottom: 5,
   },
-  bookingInfo: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
-  },
-  bookingStatus: {
-    fontSize: 14,
+  subHeader: {
+    fontSize: 18,
     fontWeight: 'bold',
-    marginTop: 5,
+    color: '#333',
+    marginTop: 20,
+    marginBottom: 10,
   },
-  statusConfirmed: {
-    color: '#4CAF50',
+  calendar: {
+    marginBottom: 20,
   },
-  statusCancelled: {
-    color: '#F44336',
-  },
-  cancelButton: {
-    backgroundColor: '#FF5F5F',
-    padding: 8,
+  slot: {
+    backgroundColor: '#FFF',
+    padding: 10,
     borderRadius: 5,
-    marginLeft: 10,
+    marginBottom: 10,
+    alignItems: 'center',
   },
-  cancelButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+  selectedSlot: {
+    backgroundColor: '#4E73DF',
   },
-  placeholderText: {
-    textAlign: 'center',
-    color: '#666',
+  slotText: {
+    color: '#333',
+    fontSize: 14,
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: '#FF5F5F',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#FFF',
     fontSize: 16,
   },
 });
 
-const WrappedCustomerHome = () => (
-  <BookingProvider>
-    <CustomerHome />
-  </BookingProvider>
-);
-
-export default WrappedCustomerHome;
+export default CustomerHome;
