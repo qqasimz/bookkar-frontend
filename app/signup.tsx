@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Picker } from '@react-native-picker/picker';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
 import { useFonts, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
 import AppLoading from 'expo-app-loading';
+import { useRouter } from 'expo-router';
 
 const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [userType, setUserType] = useState('customer'); // Default to 'customer'
+  const [userType, setUserType] = useState('customer');
+  const [open, setOpen] = useState(false); // Control dropdown visibility
+  const [items, setItems] = useState([
+    { label: 'Customer', value: 'customer' },
+    { label: 'Owner', value: 'owner' },
+  ]);
   const [error, setError] = useState('');
   const router = useRouter();
 
@@ -23,8 +28,10 @@ const Signup = () => {
   }
 
   const handleSignup = async () => {
+    setError(''); // Clear previous error
+
     if (!fullName || !email || !password) {
-      setError('Please fill in all fields');
+      setError('Please fill in all fields.');
       return;
     }
 
@@ -35,6 +42,8 @@ const Signup = () => {
         password: password,
         user_type: userType,
       };
+
+      console.log('Payload:', payload); // Debugging log
 
       const response = await fetch('https://bookar-d951ecf6cefd.herokuapp.com/api/v1/create-user', {
         method: 'POST',
@@ -48,12 +57,14 @@ const Signup = () => {
       const data = JSON.parse(rawResponse);
 
       if (response.ok && data.status_code === 200) {
-        router.push('./'); // Navigate to login page
+        Alert.alert('Success', 'Account created successfully!');
+        router.push('./'); // Navigate to the login page
       } else {
-        setError(data.message || 'Signup failed');
+        setError(data.message || 'Signup failed. Please try again.');
       }
-    } catch (err : any) {
-      setError(err.message); // Set API error message
+    } catch (err) {
+      console.error('Signup error:', err);
+      setError('An error occurred. Please try again later.');
     }
   };
 
@@ -87,16 +98,18 @@ const Signup = () => {
         placeholderTextColor="#C48A6A"
       />
 
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={userType}
-          onValueChange={(itemValue) => setUserType(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Customer" value="customer" />
-          <Picker.Item label="Owner" value="owner" />
-        </Picker>
-      </View>
+      <DropDownPicker
+        open={open}
+        value={userType}
+        items={items}
+        setOpen={setOpen}
+        setValue={setUserType}
+        setItems={setItems}
+        style={styles.picker}
+        dropDownContainerStyle={styles.dropDownContainer}
+        placeholderStyle={styles.pickerText}
+        labelStyle={styles.pickerText}
+      />
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -136,13 +149,19 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontFamily: 'Poppins_400Regular',
   },
-  pickerContainer: {
+  picker: {
     backgroundColor: '#5A3C2F',
     borderRadius: 12,
-    marginBottom: 15,
-  },
-  picker: {
+    borderWidth: 0,
     height: 50,
+  },
+  dropDownContainer: {
+    backgroundColor: '#5A3C2F',
+    borderRadius: 12,
+    borderWidth: 0,
+    marginBottom: 20, // Added padding between dropdown and button
+  },
+  pickerText: {
     color: '#FFF',
     fontFamily: 'Poppins_400Regular',
   },
@@ -159,6 +178,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginBottom: 20,
+    marginTop: 20, // Added margin to separate button from error message
   },
   signupButtonText: {
     color: '#FFF',
