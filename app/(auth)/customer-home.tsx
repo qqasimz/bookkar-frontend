@@ -1,28 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, FlatList, Image, TouchableOpacity, ScrollView } from 'react-native';
-import { auth } from '@/firebase';  // Import auth instance from firebase.ts
-import { signOut } from 'firebase/auth';  // Import signOut from firebase/auth
+import { View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity, Image } from 'react-native';
+import { auth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 import { useRouter } from 'expo-router';
+import VenueCard from '../components/VenueCard';
+import { BookingProvider, useBookings } from '../contexts/BookingContext';
+import Notification from '../components/Notification';
 
-const Home = () => {
-  type Venue = {
-    id: string;
-    name: string;
-    location: string;
-    imageUrl: string;
-    capacity: number;  // Max capacity of the venue
-    venueType: string; // Type of venue (e.g., field, stadium, court)
-    facilities: string[]; // List of facilities available (e.g., lights, lockers, etc.)
-    availableTimeslots: string[]; // Available time slots for booking
-    pricing: string; // Price for booking (e.g., per hour)
-    ratings: number; // Average rating (1 to 5 stars)
-    bookingStatus: string; // Booking status (e.g., "Available", "Booked", "Under Maintenance")
-    address: string; // Full address
+type Venue = {
+  id: string;
+  name: string;
+  location: string;
+  imageUrl: string;
+  capacity: number;
+  venueType: string;
+  facilities: string[];
+  availableTimeslots: string[];
+  pricing: string;
+  ratings: number;
+  bookingStatus: string;
+  address: string;
+  description: string;
+};
+
+const BookingsList = () => {
+  const { bookings, cancelBooking } = useBookings();
+  const [notification, setNotification] = useState({ visible: false, message: '', type: 'success' as const });
+
+  const handleCancelBooking = (bookingId: string) => {
+    cancelBooking(bookingId);
+    setNotification({
+      visible: true,
+      message: 'Booking cancelled successfully',
+      type: 'success',
+    });
   };
 
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [error, setError] = useState(null);
+  return (
+    <View style={styles.bookingsSection}>
+      <Text style={styles.sectionTitle}>My Bookings</Text>
+      {bookings.length === 0 ? (
+        <Text style={styles.placeholderText}>You don't have any bookings yet.</Text>
+      ) : (
+        <FlatList
+          data={bookings}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.bookingItem}>
+              <View style={styles.bookingDetails}>
+                <Text style={styles.bookingVenueName}>{item.venueName}</Text>
+                <Text style={styles.bookingInfo}>Date: {item.date}</Text>
+                <Text style={styles.bookingInfo}>Time: {item.timeSlot}</Text>
+                <Text style={[
+                  styles.bookingStatus,
+                  item.status === 'confirmed' ? styles.statusConfirmed : styles.statusCancelled
+                ]}>
+                  Status: {item.status}
+                </Text>
+              </View>
+              {item.status === 'confirmed' && (
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => handleCancelBooking(item.id)}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+          style={styles.bookingsList}
+        />
+      )}
+    </View>
+  );
+};
+
+const CustomerHome = () => {
   const router = useRouter();
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState({
+    visible: false,
+    message: '',
+    type: 'success' as const,
+  });
+  const { addBooking } = useBookings();
 
   useEffect(() => {
     const fetchVenues = async () => {
@@ -41,11 +103,10 @@ const Home = () => {
         }
 
         const data = await response.json();
-        setVenues(data.venues); // Assuming the API response contains a 'venues' field
+        setVenues(data.venues);
         */
 
-        // Dummy data to simulate API response
-        const dummyData = [
+        const dummyData: Venue[] = [
           {
             id: '1',
             name: 'City Sports Arena',
@@ -59,6 +120,7 @@ const Home = () => {
             ratings: 4.5,
             bookingStatus: 'Available',
             address: '123 Main Street, Downtown, City',
+            description: 'A state-of-the-art sports arena featuring multiple courts, professional lighting, and modern amenities. Perfect for tournaments and professional matches.'
           },
           {
             id: '2',
@@ -73,6 +135,7 @@ const Home = () => {
             ratings: 4.7,
             bookingStatus: 'Available',
             address: '456 Beach Road, Coastline',
+            description: 'Beautiful beachside tennis courts with stunning ocean views. Professionally maintained surfaces and equipment rental available.'
           },
           {
             id: '3',
@@ -85,8 +148,9 @@ const Home = () => {
             availableTimeslots: ['7:00 AM - 9:00 AM', '10:00 AM - 12:00 PM', '1:00 PM - 3:00 PM'],
             pricing: '$200/hr',
             ratings: 4.3,
-            bookingStatus: 'Booked', // Example of a venue that is already booked
+            bookingStatus: 'Booked',
             address: '789 Mountain Road, Uptown',
+            description: 'Premier football stadium with VIP amenities and spectacular mountain views. Ideal for professional matches and tournaments.'
           },
           {
             id: '4',
@@ -99,171 +163,200 @@ const Home = () => {
             availableTimeslots: ['6:00 AM - 8:00 AM', '9:00 AM - 11:00 AM', '12:00 PM - 2:00 PM'],
             pricing: '$40/hr',
             ratings: 4.0,
-            bookingStatus: 'Under Maintenance', // Example of a venue under maintenance
+            bookingStatus: 'Under Maintenance',
             address: '101 Greenfield Ave, Suburbs',
-          },
+            description: 'Community basketball court with excellent facilities and convenient suburban location. Perfect for casual games and local tournaments.'
+          }
         ];
 
         setVenues(dummyData);
       } catch (err: any) {
         setError(err.message);
+        console.error(err);
       }
     };
 
     fetchVenues();
   }, []);
 
-  const renderVenueCard = ({ item }: { item: Venue }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
-      <Text style={styles.venueName}>{item.name}</Text>
-      <Text style={styles.venueLocation}>{item.location}</Text>
-      <Text style={styles.venueType}>{item.venueType}</Text>
-      <Text style={styles.venueDetails}>Capacity: {item.capacity}</Text>
-      <Text style={styles.venueDetails}>Price: {item.pricing}</Text>
-      <Text style={styles.venueDetails}>Rating: {item.ratings} ★</Text>
-      <Text style={styles.venueDetails}>Status: {item.bookingStatus}</Text>
-      <Text style={styles.venueDetails}>Address: {item.address}</Text>
-    </View>
-  );
-
   const handleSignOut = async () => {
     try {
-      await signOut(auth);  // Using the Firebase Authentication instance from firebase.ts
-      console.log('User signed out');
-      router.replace('/'); // Redirect to home or login page after sign out
+      await signOut(auth);
+      router.replace('/');
     } catch (err) {
       console.error('Error signing out: ', err);
+    }
+  };
+
+  const handleBooking = (venueId: string, date: string, timeSlot: string) => {
+    const venue = venues.find(v => v.id === venueId);
+    if (venue) {
+      addBooking({
+        venueId,
+        venueName: venue.name,
+        date,
+        timeSlot,
+        status: 'confirmed',
+        userId: auth.currentUser?.uid || '',
+      });
+      
+      setNotification({
+        visible: true,
+        message: 'Booking confirmed successfully!',
+        type: 'success',
+      });
     }
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.text}>Home Screen</Text>
+        <Text style={styles.headerText}>Venues</Text>
         <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
       </View>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      
-      {/* Horizontal Venues List */}
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
+
       <View style={styles.venueSection}>
         <Text style={styles.sectionTitle}>Venues Near You</Text>
-        <FlatList
-          data={venues}
-          renderItem={renderVenueCard}
-          keyExtractor={(item) => item.id}
-          horizontal={true} // Enable horizontal scrolling
+        <ScrollView
+          horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.cardContainer}
-        />
+          contentContainerStyle={styles.venueList}
+        >
+          {venues.map((venue) => (
+            <VenueCard
+              key={venue.id}
+              venue={venue}
+              onBooking={handleBooking}
+            />
+          ))}
+        </ScrollView>
       </View>
 
-      {/* Additional Content */}
-      <View style={styles.bookingsSection}>
-        <Text style={styles.sectionTitle}>My Bookings</Text>
-        {/* Add booking items or content here */}
-        <Text style={styles.placeholderText}>You don't have any bookings yet.</Text>
-      </View>
+      <BookingsList />
+
+      <Notification
+        visible={notification.visible}
+        message={notification.message}
+        type={notification.type}
+        onHide={() => setNotification(prev => ({ ...prev, visible: false }))}
+      />
     </ScrollView>
   );
 };
 
-export default Home;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F1F5F8',  // Light background color for a clean look
+    backgroundColor: '#F1F5F8',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#4E73DF', // A cool blue color for the header
+    backgroundColor: '#4E73DF',
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
   },
-  text: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: '#fff', // White text for good contrast
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  errorText: {
+    color: '#FF5F5F',
+    marginBottom: 10,
+    paddingHorizontal: 20,
   },
   logoutButton: {
-    padding: 12,
-    backgroundColor: '#FF5F5F', // Red color for logout for contrast
-    borderRadius: 25,
+    backgroundColor: '#FF5F5F',
+    padding: 10,
+    borderRadius: 5,
   },
   logoutButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  errorText: {
-    color: '#FF5F5F', // Red for error message
-    marginBottom: 10,
-    paddingHorizontal: 20,
-  },
   venueSection: {
-    paddingLeft: 20,
-    paddingVertical: 15,
+    padding: 20,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  cardContainer: {
-    paddingBottom: 20,
-  },
-  card: {
-    width: 250,
-    backgroundColor: '#fff',
-    padding: 15,
-    marginRight: 10,
-    borderRadius: 15,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  }, 
-  image: {
-    width: 200,
-    height: 150,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  venueName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    marginBottom: 15,
     color: '#333',
   },
-  venueLocation: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
-  },
-  venueType: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 10,
-  },
-  venueDetails: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
+  venueList: {
+    paddingRight: 20,
   },
   bookingsSection: {
     padding: 20,
   },
-  placeholderText: {
+  bookingsList: {
+    marginTop: 10,
+  },
+  bookingItem: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    elevation: 2,
+  },
+  bookingDetails: {
+    flex: 1,
+  },
+  bookingVenueName: {
     fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  bookingInfo: {
+    fontSize: 14,
     color: '#666',
+    marginBottom: 2,
+  },
+  bookingStatus: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 5,
+  },
+  statusConfirmed: {
+    color: '#4CAF50',
+  },
+  statusCancelled: {
+    color: '#F44336',
+  },
+  cancelButton: {
+    backgroundColor: '#FF5F5F',
+    padding: 8,
+    borderRadius: 5,
+    marginLeft: 10,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  placeholderText: {
     textAlign: 'center',
+    color: '#666',
+    fontSize: 16,
   },
 });
+
+const WrappedCustomerHome = () => (
+  <BookingProvider>
+    <CustomerHome />
+  </BookingProvider>
+);
+
+export default WrappedCustomerHome;
