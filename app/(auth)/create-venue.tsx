@@ -12,7 +12,7 @@ type TimeSlot = {
 type VenueDetails = {
   name: string;
   location: string;
-  image_url: string; // Updated field name
+  image_url: string; // Updated field for image
   capacity: number;
   venue_type: string;
   available_time_slots: TimeSlot[];
@@ -26,21 +26,22 @@ const CreateVenue = () => {
   const [venueDetails, setVenueDetails] = useState<VenueDetails>({
     name: '',
     location: '',
-    image_url: '', // Updated field name
+    image_url: '', // Updated field
     capacity: 0,
     venue_type: '',
     available_time_slots: [],
     price: '',
-    booking_status: 'Available',
+    booking_status: 'Available', // Default booking status
     address: '',
     description: '',
   });
 
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [startDate, setStartDate] = useState(''); // Start date for venue availability
+  const [endDate, setEndDate] = useState(''); // End date for venue availability
+  const [loading, setLoading] = useState(false); // Loading state for API call
+  const router = useRouter(); // Router for navigation
 
+  // Generate time slots between start and end date
   const generateTimeslots = (start: string, end: string): TimeSlot[] => {
     const timeslots: TimeSlot[] = [];
     let currentDate = new Date(start);
@@ -65,6 +66,7 @@ const CreateVenue = () => {
     return timeslots;
   };
 
+  // Handle input changes and update state
   const handleChange = (field: keyof VenueDetails, value: string | number) => {
     setVenueDetails((prev) => ({
       ...prev,
@@ -72,6 +74,7 @@ const CreateVenue = () => {
     }));
   };
 
+  // Handle venue creation
   const handleCreateVenue = async () => {
     if (!startDate || !endDate) {
       console.log('Error', 'Please select start and end dates.');
@@ -81,7 +84,7 @@ const CreateVenue = () => {
     const generatedTimeslots = generateTimeslots(startDate, endDate);
     const updatedVenueDetails = { ...venueDetails, available_time_slots: generatedTimeslots };
 
-    console.log('Updated Venue Details:', updatedVenueDetails);
+    console.log('Updated Venue Details:', updatedVenueDetails); // Debug payload
 
     try {
       setLoading(true);
@@ -93,18 +96,17 @@ const CreateVenue = () => {
         body: JSON.stringify(updatedVenueDetails),
       });
 
-      console.log("payload sent");
+      console.log("Payload sent"); // Confirmation of request
 
       setLoading(false);
 
       if (response.ok) {
-        const responseData = await response.json(); // Parse the JSON response
-        console.log('Status Code:', response.status);
-        console.log('Response Data:', responseData); // Log the complete response
-      
-        if (response.status === 200){
+        const responseData = await response.json(); // Parse JSON response
+        console.log('Response Data:', responseData); // Log API response
+
+        if (response.status === 200) {
           Alert.alert('Success', 'Venue created successfully!');
-          router.push('./owner-home');
+          router.push('./owner-home'); // Redirect to owner's dashboard
         } else {
           console.log('Warning: No Venue ID returned.');
         }
@@ -112,7 +114,6 @@ const CreateVenue = () => {
         const errorData = await response.json();
         console.log('Error', errorData.message || 'Failed to create venue.');
       }
-      
     } catch (error) {
       setLoading(false);
       console.log('Error', 'Something went wrong. Please try again later.');
@@ -121,12 +122,14 @@ const CreateVenue = () => {
 
   return (
     <ScrollView style={styles.container}>
+      {/* Back button to navigate to the owner's dashboard */}
       <TouchableOpacity onPress={() => router.push('./owner-home')} style={styles.backButton}>
         <Icon name="arrow-back" size={24} color="#4E73DF" />
       </TouchableOpacity>
 
       <Text style={styles.headerText}>Create New Venue</Text>
 
+      {/* Input fields for venue details */}
       <TextInput
         style={styles.input}
         placeholder="Name"
@@ -177,6 +180,7 @@ const CreateVenue = () => {
         onChangeText={(value) => handleChange('description', value)}
       />
 
+      {/* Calendar for selecting availability start and end dates */}
       <Text style={styles.label}>Select Start Date:</Text>
       <Calendar
         onDayPress={(day: any) => setStartDate(day.dateString)}
@@ -193,6 +197,7 @@ const CreateVenue = () => {
       />
       <Text style={styles.label}>Selected End Date: {endDate || 'None'}</Text>
 
+      {/* Show loading indicator or create button based on loading state */}
       {loading ? (
         <ActivityIndicator size="large" color="#4E73DF" />
       ) : (

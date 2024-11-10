@@ -8,31 +8,37 @@ import { auth } from '@/firebase'; // Assuming your Firebase is set up
 import { useRouter } from 'expo-router';
 
 const Login = () => {
+  // State variables to manage email, password, and error messages
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
 
+  // Load custom fonts
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_600SemiBold,
   });
 
   if (!fontsLoaded) {
-    return <AppLoading />;
+    return <AppLoading />; // Show loading screen until fonts are loaded
   }
 
   const handleLogin = async () => {
-    setError('');
+    setError(''); // Clear any existing error messages
+
+    // Check if email and password fields are filled
     if (!email || !password) {
       setError('Please enter both email and password.');
       return;
     }
 
     try {
+      // Sign in the user with Firebase authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Fetch additional user details from backend
       const response = await fetch('http://bookar-d951ecf6cefd.herokuapp.com/api/v1/get-user-details', {
         method: 'POST',
         headers: {
@@ -45,6 +51,7 @@ const Login = () => {
         const data = await response.json();
         const userType = data?.data?.user_type;
 
+        // Navigate to appropriate home screen based on user type
         if (userType === 'customer') {
           router.push('./customer-home');
         } else if (userType === 'owner') {
@@ -56,6 +63,7 @@ const Login = () => {
         setError('Error fetching user details.');
       }
     } catch (err) {
+      // Display error message if login fails
       setError('Failed to login. Please check your credentials.');
     }
   };
@@ -64,6 +72,7 @@ const Login = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Login to BookKar</Text>
 
+      {/* Input for email */}
       <View style={styles.inputContainer}>
         <Ionicons name="person-outline" size={20} color="#C48A6A" style={styles.icon} />
         <TextInput
@@ -77,6 +86,7 @@ const Login = () => {
         />
       </View>
 
+      {/* Input for password */}
       <View style={styles.inputContainer}>
         <Ionicons name="lock-closed-outline" size={20} color="#C48A6A" style={styles.icon} />
         <TextInput
@@ -89,22 +99,26 @@ const Login = () => {
         />
       </View>
 
+      {/* Display error messages */}
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <TouchableOpacity style={styles.rememberMe}>
         <Text style={styles.rememberText}>Remember me</Text>
       </TouchableOpacity>
 
+      {/* Login button */}
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
       <Text style={styles.orText}>or continue with</Text>
 
+      {/* Google login button (dummy implementation) */}
       <TouchableOpacity style={styles.googleButton}>
         <Text style={styles.googleButtonText}>G</Text>
       </TouchableOpacity>
 
+      {/* Navigation link to the sign-up page */}
       <View style={styles.signupContainer}>
         <Text style={styles.switchText}>Don't have an account? </Text>
         <TouchableOpacity onPress={() => router.push('./signup')}>

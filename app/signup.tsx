@@ -6,30 +6,33 @@ import AppLoading from 'expo-app-loading';
 import { useRouter } from 'expo-router';
 
 const Signup = () => {
+  // State variables for managing input values and dropdown selection
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [userType, setUserType] = useState('customer');
-  const [open, setOpen] = useState(false); // Control dropdown visibility
+  const [userType, setUserType] = useState('customer'); // Default user type
+  const [open, setOpen] = useState(false); // Controls dropdown visibility
   const [items, setItems] = useState([
     { label: 'Customer', value: 'customer' },
     { label: 'Owner', value: 'owner' },
   ]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // Error message state
   const router = useRouter();
 
+  // Load custom fonts
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_600SemiBold,
   });
 
   if (!fontsLoaded) {
-    return <AppLoading />;
+    return <AppLoading />; // Show loading screen until fonts are ready
   }
 
   const handleSignup = async () => {
-    setError(''); // Clear previous error
+    setError(''); // Clear previous error messages
 
+    // Validate required fields
     if (!fullName || !email || !password) {
       setError('Please fill in all fields.');
       return;
@@ -43,8 +46,9 @@ const Signup = () => {
         user_type: userType,
       };
 
-      console.log('Payload:', payload); // Debugging log
+      console.log('Payload:', payload); // Log payload for debugging purposes
 
+      // Send signup data to the backend
       const response = await fetch('https://bookar-d951ecf6cefd.herokuapp.com/api/v1/create-user', {
         method: 'POST',
         headers: {
@@ -54,16 +58,17 @@ const Signup = () => {
       });
 
       const rawResponse = await response.text();
-      const data = JSON.parse(rawResponse);
+      const data = JSON.parse(rawResponse); // Parse response from the server
 
       if (response.ok && data.status_code === 200) {
+        // If successful, display success alert and redirect to login page
         Alert.alert('Success', 'Account created successfully!');
-        router.push('./'); // Navigate to the login page
+        router.push('./'); // Navigate to login page
       } else {
         setError(data.message || 'Signup failed. Please try again.');
       }
     } catch (err) {
-      console.error('Signup error:', err);
+      console.error('Signup error:', err); // Log error details for debugging
       setError('An error occurred. Please try again later.');
     }
   };
@@ -72,6 +77,7 @@ const Signup = () => {
     <View style={styles.container}>
       <Text style={styles.heading}>Sign Up</Text>
 
+      {/* Input field for full name */}
       <TextInput
         style={styles.input}
         placeholder="Full Name"
@@ -80,6 +86,7 @@ const Signup = () => {
         placeholderTextColor="#C48A6A"
       />
 
+      {/* Input field for email */}
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -89,6 +96,7 @@ const Signup = () => {
         keyboardType="email-address"
       />
 
+      {/* Input field for password */}
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -98,6 +106,7 @@ const Signup = () => {
         placeholderTextColor="#C48A6A"
       />
 
+      {/* Dropdown picker for user type selection */}
       <DropDownPicker
         open={open}
         value={userType}
@@ -111,12 +120,15 @@ const Signup = () => {
         labelStyle={styles.pickerText}
       />
 
+      {/* Display error messages */}
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
+      {/* Signup button */}
       <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
         <Text style={styles.signupButtonText}>Sign Up</Text>
       </TouchableOpacity>
 
+      {/* Link to navigate to the login page */}
       <Text style={styles.switchText} onPress={() => router.push('./')}>
         Already have an account? <Text style={styles.switchLink}>Login here.</Text>
       </Text>
@@ -159,7 +171,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#5A3C2F',
     borderRadius: 12,
     borderWidth: 0,
-    marginBottom: 20, // Added padding between dropdown and button
+    marginBottom: 20, // Space between dropdown and next elements
   },
   pickerText: {
     color: '#FFF',
@@ -178,7 +190,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     marginBottom: 20,
-    marginTop: 20, // Added margin to separate button from error message
+    marginTop: 20, // Separate button from error message
   },
   signupButtonText: {
     color: '#FFF',
