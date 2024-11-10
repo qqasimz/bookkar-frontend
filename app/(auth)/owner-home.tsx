@@ -1,31 +1,51 @@
-import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+
+type TimeSlot = {
+  start: string;
+  end: string;
+};
 
 type Venue = {
   id: string;
+  venue_id: string; // In case the API uses `venue_id`
   name: string;
   location: string;
-  imageUrl: string;
+  image_url: string;
   capacity: number;
-  venueType: string;
-  facilities: string[];
-  availableTimeslots: string[];
-  pricing: string;
-  ratings: number;
-  bookingStatus: string;
+  venue_type: string;
+  available_time_slots: TimeSlot[];
+  price: string;
+  booking_status: string;
   address: string;
   description: string;
 };
 
 const OwnerHome = () => {
-  const [venues, setVenues] = useState<Venue[]>([
-    // Dummy data for demo
-    { id: '1', name: 'Soccer Field', location: 'Downtown', imageUrl: '', capacity: 50, venueType: 'Outdoor', facilities: ['Lights', 'Restrooms'], availableTimeslots: ['8 AM - 10 PM'], pricing: '$100/hr', ratings: 4.5, bookingStatus: 'Available', address: '123 Main St', description: 'Best soccer field in town.' },
-    // Add more dummy venues if needed
-  ]);
-
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchVenues = async () => {
+      try {
+        const response = await fetch('http://bookar-d951ecf6cefd.herokuapp.com/api/v1/get-all-venues');
+        if (!response.ok) throw new Error('Failed to fetch venues');
+
+        const data = await response.json();
+        setVenues(data?.data?.venues || []);
+      } catch (err: any) {
+        setError(err.message);
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVenues();
+  }, []);
 
   const goToCreateVenue = () => {
     router.push('./create-venue');
@@ -33,10 +53,10 @@ const OwnerHome = () => {
 
   const handleEditVenue = (venueId: string) => {
     console.log(`Edit venue with ID: ${venueId}`);
+    // Implement navigation to edit venue screen here
   };
 
   const handleLogout = () => {
-    // Add logout logic here (e.g., clear auth tokens, navigate to login screen)
     console.log('User logged out');
     router.replace('/'); // Assuming there's a login page
   };
@@ -55,18 +75,22 @@ const OwnerHome = () => {
         <Button title="Create New Venue" onPress={goToCreateVenue} color="#4E73DF" />
       </View>
 
-      {venues.length === 0 ? (
+      {loading ? (
+        <ActivityIndicator size="large" color="#4E73DF" />
+      ) : error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : venues.length === 0 ? (
         <Text style={styles.placeholderText}>You haven't created any venues yet.</Text>
       ) : (
         venues.map((venue) => (
-          <View key={venue.id} style={styles.venueCard}>
+          <View key={venue.id || venue.venue_id} style={styles.venueCard}>
             <Text style={styles.venueName}>{venue.name}</Text>
             <Text>Location: {venue.location}</Text>
             <Text>Capacity: {venue.capacity}</Text>
-            <Text>Type: {venue.venueType}</Text>
+            <Text>Type: {venue.venue_type}</Text>
             <TouchableOpacity
               style={styles.manageButton}
-              onPress={() => handleEditVenue(venue.id)}
+              onPress={() => handleEditVenue(venue.id || venue.venue_id)}
             >
               <Text style={styles.manageButtonText}>Manage</Text>
             </TouchableOpacity>
@@ -120,6 +144,12 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     fontSize: 16,
+  },
+  errorText: {
+    color: '#FF5F5F',
+    textAlign: 'center',
+    fontSize: 16,
+    marginBottom: 20,
   },
   venueCard: {
     backgroundColor: '#FFF',
