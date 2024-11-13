@@ -3,8 +3,7 @@ import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-nativ
 import { useFonts, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
 import AppLoading from 'expo-app-loading'; // For font loading
 import { Ionicons } from '@expo/vector-icons';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/firebase'; // Assuming your Firebase is set up
+import  auth  from '@react-native-firebase/auth'; // Import the auth instance from firebase.ts
 import { useRouter } from 'expo-router';
 
 const Login = () => {
@@ -35,7 +34,7 @@ const Login = () => {
 
     try {
       // Sign in the user with Firebase authentication
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await auth().signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
       // Fetch additional user details from backend
