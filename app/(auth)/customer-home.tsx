@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Modal, ScrollView, Alert } from 'react-native';
-import { auth } from '@/firebase';
-import { signOut } from 'firebase/auth';
+import  auth from '@react-native-firebase/auth'; // Import the auth instance from firebase.ts
 import { useRouter } from 'expo-router';
 import { Calendar } from 'react-native-calendars';
 
@@ -80,7 +79,7 @@ const CustomerHome = () => {
     }
 
     const bookingPayload = {
-      user_id: auth.currentUser?.uid || 'test-user-id', // Replace with actual user ID
+      user_id: auth().currentUser?.uid || 'test-user-id', // Replace with actual user ID
       venue_id: selectedVenue?.id,
       time_slot: selectedSlot,
     };
@@ -117,7 +116,7 @@ const CustomerHome = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      await auth().signOut();
       router.replace('/');
     } catch (err) {
       console.error('Error signing out: ', err);
